@@ -4,7 +4,7 @@ A web app for splitting shared costs with friends and roommates. Make a group, a
 paid for, choose who it's split between, and the app works out the fewest payments that
 settle everyone up. It installs on Android and iPhone home screens like a regular app.
 
-**Live app:** _link coming soon_
+**Live app:** https://expense-splitter-2dua.onrender.com (free hosting, so the first visit after a quiet spell takes about a minute to wake up)
 
 ## Features
 
