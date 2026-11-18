@@ -1,0 +1,20 @@
+# Databases (real people's data never goes on GitHub)
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Installed packages
+node_modules/
+
+# Mac files
+.DS_Store
+
+# Older copies of the project kept on this computer
+old-version/
+browser-only-version/
+simple-ui-version/
+before-groups-version/
+groups-only-version/
+before-friends-version/
+before-hosting-version/

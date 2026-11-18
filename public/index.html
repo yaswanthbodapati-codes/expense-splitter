@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#12302f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Splitter">
+  <title>Expense Splitter</title>
+  <meta name="description" content="Split costs with friends and see who owes whom.">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap">
+  <!-- Addresses start with / so they also work on group pages like /g/abc123 -->
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="app">
+
+    <!-- ===== Loading ===== -->
+    <div id="loadingView">
+      <p class="loading">Loading…</p>
+    </div>
+
+    <!-- ===== Sign up / log in ===== -->
+    <div id="authView" hidden>
+      <header class="topbar">
+        <h1>Expense Splitter</h1>
+      </header>
+
+      <section class="settle" aria-labelledby="authTitle">
+        <h2 id="authTitle" class="settle-message"></h2>
+        <p id="authSub" class="settle-sub"></p>
+
+        <form id="authForm" class="dark-form" novalidate>
+          <div id="nameField">
+            <label for="authName">Your name</label>
+            <input id="authName" type="text" maxlength="40" autocomplete="name">
+          </div>
+          <label for="authUsername">Username</label>
+          <input id="authUsername" type="text" maxlength="20" autocomplete="username"
+                 autocapitalize="none" spellcheck="false">
+          <label for="authPassword">Password</label>
+          <input id="authPassword" type="password" maxlength="200">
+          <p id="authHint" class="field-hint">At least 8 characters.</p>
+          <p id="authError" class="form-error on-dark" role="alert"></p>
+          <button id="authSubmit" type="submit" class="settle-action wide"></button>
+        </form>
+
+        <p class="switch-line">
+          <span id="switchText"></span>
+          <button id="switchBtn" type="button" class="switch-btn"></button>
+        </p>
+      </section>
+    </div>
+
+    <!-- ===== Home: your groups ===== -->
+    <div id="homeView" hidden>
+      <header class="topbar topbar-row">
+        <h1>Expense Splitter</h1>
+        <button id="profileBtn" class="avatar-btn" type="button" aria-label="Your profile"></button>
+      </header>
+
+      <section class="settle" aria-labelledby="overallTitle">
+        <h2 id="overallTitle" class="settle-title"></h2>
+        <p id="overallMessage" class="settle-message"></p>
+      </section>
+
+      <section class="block" aria-labelledby="groupsTitle">
+        <div class="block-head">
+          <h2 id="groupsTitle">Your groups</h2>
+          <button id="newGroupBtn" class="text-btn" type="button">New group</button>
+        </div>
+        <ul id="groupsList" class="list"></ul>
+      </section>
+
+      <section class="block" aria-labelledby="friendsTitle">
+        <div class="block-head">
+          <h2 id="friendsTitle">Friends</h2>
+          <button id="findPeopleBtn" class="text-btn" type="button">Find people</button>
+        </div>
+        <ul id="friendsList" class="list"></ul>
+      </section>
+    </div>
+
+    <!-- ===== Someone opened a group link they're not in yet ===== -->
+    <div id="joinView" hidden>
+      <header class="topbar">
+        <a href="/" class="back-link">Your groups</a>
+      </header>
+      <section class="settle" aria-labelledby="joinTitle">
+        <h2 id="joinTitle" class="settle-message"></h2>
+        <p id="joinWho" class="settle-sub"></p>
+        <p id="joinError" class="form-error on-dark" role="alert"></p>
+        <button id="joinBtn" type="button" class="settle-action">Join group</button>
+      </section>
+    </div>
+
+    <!-- ===== A group that doesn't exist ===== -->
+    <div id="missingView" hidden>
+      <header class="topbar">
+        <a href="/" class="back-link">Your groups</a>
+      </header>
+      <section class="settle">
+        <p id="missingMessage" class="settle-message"></p>
+        <a href="/" class="settle-action link-action">Go to your groups</a>
+      </section>
+    </div>
+
+    <!-- ===== One group ===== -->
+    <div id="groupView" hidden>
+      <header class="topbar">
+        <a href="/" class="back-link">Your groups</a>
+        <div class="title-row">
+          <h1 id="groupTitle"></h1>
+          <button id="shareBtn" class="share-btn" type="button">Invite</button>
+        </div>
+      </header>
+
+      <!-- The main answer: who pays whom -->
+      <section class="settle" aria-labelledby="settleTitle">
+        <div class="settle-head">
+          <h2 id="settleTitle" class="settle-title">To settle up</h2>
+          <button id="recordPaymentBtn" class="settle-link" type="button">Record a payment</button>
+        </div>
+        <div id="settleBody"></div>
+      </section>
+
+      <section class="block" aria-labelledby="peopleTitle">
+        <div class="block-head">
+          <h2 id="peopleTitle">People</h2>
+          <button id="addPeopleBtn" class="text-btn" type="button">Add people</button>
+        </div>
+        <ul id="peopleList" class="list"></ul>
+      </section>
+
+      <section class="block" aria-labelledby="activityTitle">
+        <div class="block-head">
+          <h2 id="activityTitle">Activity</h2>
+          <p id="totalDisplay" class="total"></p>
+        </div>
+        <ul id="activityList" class="list"></ul>
+      </section>
+
+      <button id="deleteGroupBtn" class="reset-btn" type="button" hidden>Delete group</button>
+    </div>
+  </div>
+
+  <button id="addExpenseBtn" class="fab" type="button" hidden>Add expense</button>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- Panel: your profile -->
+  <dialog id="profileDialog" class="sheet" aria-labelledby="profileName">
+    <form method="dialog" class="profile">
+      <span id="profileAvatar" class="avatar big" aria-hidden="true"></span>
+      <h2 id="profileName"></h2>
+      <p id="profileUsername" class="profile-username"></p>
+      <div class="sheet-actions">
+        <button type="button" class="ghost-btn" data-close>Close</button>
+        <button id="logoutBtn" type="button" class="danger-btn">Log out</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Panel: new group -->
+  <dialog id="groupDialog" class="sheet" aria-labelledby="groupDialogTitle">
+    <form id="groupForm" novalidate>
+      <h2 id="groupDialogTitle">New group</h2>
+      <label for="groupNameInput">Group name</label>
+      <input id="groupNameInput" type="text" maxlength="40" placeholder="Flat, Goa trip, Office lunch" autocomplete="off">
+      <p class="split-note">You'll get a link to invite people.</p>
+      <p id="groupError" class="form-error" role="alert"></p>
+      <div class="sheet-actions">
+        <button type="button" class="ghost-btn" data-close>Cancel</button>
+        <button type="submit" class="primary-btn">Create group</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Panel: add an expense -->
+  <dialog id="expenseDialog" class="sheet" aria-labelledby="expenseDialogTitle">
+    <form id="expenseForm" novalidate>
+      <h2 id="expenseDialogTitle">Add an expense</h2>
+
+      <label for="descInput">What was it for?</label>
+      <input id="descInput" type="text" maxlength="100" placeholder="Groceries, rent, taxi" autocomplete="off">
+
+      <label for="amountInput">Amount</label>
+      <div class="money-input">
+        <span aria-hidden="true">$</span>
+        <input id="amountInput" type="number" inputmode="decimal" step="0.01" min="0.01" placeholder="0.00">
+      </div>
+
+      <fieldset>
+        <legend>Paid by</legend>
+        <div id="payerChoices" class="choices"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Split between</legend>
+        <div id="splitChoices" class="choices"></div>
+      </fieldset>
+      <p id="splitNote" class="split-note"></p>
+
+      <p id="expenseError" class="form-error" role="alert"></p>
+      <div class="sheet-actions">
+        <button type="button" class="ghost-btn" data-close>Cancel</button>
+        <button type="submit" class="primary-btn">Add expense</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Panel: record a payment -->
+  <dialog id="paymentDialog" class="sheet" aria-labelledby="paymentDialogTitle">
+    <form id="paymentForm" novalidate>
+      <h2 id="paymentDialogTitle">Record a payment</h2>
+
+      <fieldset>
+        <legend>Who paid</legend>
+        <div id="fromChoices" class="choices"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Paid to</legend>
+        <div id="toChoices" class="choices"></div>
+      </fieldset>
+
+      <label for="paymentAmount">Amount</label>
+      <div class="money-input">
+        <span aria-hidden="true">$</span>
+        <input id="paymentAmount" type="number" inputmode="decimal" step="0.01" min="0.01" placeholder="0.00">
+      </div>
+      <p class="split-note">Record money paid outside the app, like cash or a bank transfer.</p>
+
+      <p id="paymentError" class="form-error" role="alert"></p>
+      <div class="sheet-actions">
+        <button type="button" class="ghost-btn" data-close>Cancel</button>
+        <button type="submit" class="primary-btn">Record payment</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Panel: find people by username -->
+  <dialog id="searchDialog" class="sheet" aria-labelledby="searchTitle">
+    <form id="searchForm" novalidate>
+      <h2 id="searchTitle">Find people</h2>
+      <label for="searchInput">Search by username</label>
+      <input id="searchInput" type="search" maxlength="21" placeholder="For example purna"
+             autocomplete="off" autocapitalize="none" spellcheck="false">
+      <ul id="searchResults" class="results" aria-live="polite"></ul>
+      <p id="searchError" class="form-error" role="alert"></p>
+      <div class="sheet-actions">
+        <button type="button" class="ghost-btn" data-close>Done</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Panel: add people to a group -->
+  <dialog id="addPeopleDialog" class="sheet" aria-labelledby="addPeopleTitle">
+    <form novalidate>
+      <h2 id="addPeopleTitle">Add people</h2>
+      <p class="split-note">Add a friend straight to this group, find someone by username, or send the invite link.</p>
+      <ul id="addPeopleList" class="results"></ul>
+      <p id="addPeopleError" class="form-error" role="alert"></p>
+      <button id="addPeopleFindBtn" type="button" class="text-btn">Find someone by username</button>
+      <div class="sheet-actions">
+        <button type="button" class="ghost-btn" data-close>Done</button>
+        <button id="addPeopleLinkBtn" type="button" class="primary-btn">Send invite link</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Panel: are you sure? -->
+  <dialog id="confirmDialog" class="sheet" aria-labelledby="confirmTitle">
+    <form method="dialog">
+      <h2 id="confirmTitle"></h2>
+      <p id="confirmText" class="confirm-text"></p>
+      <div class="sheet-actions">
+        <button type="button" class="ghost-btn" data-close>Cancel</button>
+        <button id="confirmOk" type="submit" value="yes" class="danger-btn"></button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="/app.js"></script>
+</body>
+</html>

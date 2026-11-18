@@ -1,0 +1,16 @@
+{
+  "name": "expense-splitter",
+  "version": "1.0.0",
+  "description": "Split costs with friends: groups, uneven splits, settle-up suggestions and recorded payments.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.15.14"
+  },
+  "private": true
+}

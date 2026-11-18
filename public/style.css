@@ -1,0 +1,771 @@
+/* ---------- Colors and sizes used everywhere ---------- */
+:root {
+  --bg: #e8efec;          /* pale sea green page */
+  --surface: #ffffff;     /* lists and panels */
+  --ink: #12302f;         /* deep teal: text and the dark panel */
+  --ink-soft: #546b67;    /* secondary text */
+  --on-dark: #f3f7f5;     /* text on the dark panel */
+  --on-dark-soft: #a9c2bc;
+  --line: #d3deda;        /* borders and dividers */
+  --accent: #f2b632;      /* marigold: main button and amounts */
+  --gets: #1d7a52;        /* green: gets money back */
+  --owes: #b23a2e;        /* red: owes money */
+
+  --font: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Anything marked hidden in the HTML stays hidden */
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 1rem;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* ---------- Page layout: one phone-width column ---------- */
+.app {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 20px max(16px, env(safe-area-inset-right)) 136px max(16px, env(safe-area-inset-left));
+}
+
+.loading {
+  margin-top: 40vh;
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+.topbar h1 {
+  margin: 4px 0 16px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.topbar-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.topbar-row h1 {
+  margin: 0;
+}
+
+/* Group page header: back link, then group name and Invite button */
+.back-link {
+  display: inline-block;
+  padding: 4px 0;
+  margin-bottom: 4px;
+  color: var(--ink-soft);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.back-link::before {
+  content: "‹ ";
+}
+
+.title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.title-row h1 {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.share-btn {
+  flex: none;
+  padding: 9px 18px;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  background: none;
+  font-weight: 650;
+}
+
+/* ---------- The dark panel (the main thing on each screen) ---------- */
+.settle {
+  background: var(--ink);
+  color: var(--on-dark);
+  border-radius: 24px;
+  padding: 20px 22px 24px;
+  margin-bottom: 28px;
+}
+
+.settle :focus-visible {
+  outline-color: var(--accent);
+}
+
+.settle-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.settle-title {
+  margin: 0 0 12px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--on-dark-soft);
+}
+
+.settle-head .settle-title {
+  margin: 0;
+}
+
+.settle-link {
+  border: none;
+  background: none;
+  padding: 4px 0;
+  color: var(--accent);
+  font-weight: 650;
+}
+
+.settle-message {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.settle-message .amount {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.settle-sub {
+  margin: 8px 0 0;
+  color: var(--on-dark-soft);
+}
+
+.settle-action {
+  margin-top: 18px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.settle-action.wide {
+  width: 100%;
+  height: 50px;
+}
+
+.link-action {
+  display: inline-block;
+  text-decoration: none;
+}
+
+.payments {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.payments li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: 4px 16px;
+  padding: 12px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.payments li:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.payment-who {
+  font-size: 1.2rem;
+  font-weight: 550;
+}
+
+.payment-amount {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.mark-paid {
+  grid-column: 1 / -1;
+  justify-self: start;
+  padding: 7px 14px;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  background: none;
+  color: var(--on-dark);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* Forms on the dark panel (sign up, log in) */
+.dark-form {
+  margin-top: 20px;
+}
+
+.dark-form label {
+  display: block;
+  margin: 14px 0 6px;
+  font-weight: 600;
+}
+
+.dark-form input {
+  width: 100%;
+  height: 48px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 12px;
+  background: var(--on-dark);
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+.field-hint {
+  margin: 6px 0 0;
+  font-size: 0.9rem;
+  color: var(--on-dark-soft);
+}
+
+.switch-line {
+  margin: 18px 0 0;
+  color: var(--on-dark-soft);
+}
+
+.switch-btn {
+  border: none;
+  background: none;
+  padding: 4px 2px;
+  color: var(--accent);
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ---------- Lists ---------- */
+.block {
+  margin-bottom: 24px;
+}
+
+.block-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 0 4px 8px;
+}
+
+.block-head h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.text-btn {
+  border: none;
+  background: none;
+  padding: 6px 4px;
+  font-weight: 650;
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 3px;
+  text-underline-offset: 4px;
+}
+
+.total {
+  margin: 0;
+  font-weight: 650;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0 16px;
+  background: var(--surface);
+  border-radius: 16px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+
+.row:first-child {
+  border-top: none;
+}
+
+.avatar {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.avatar.big {
+  width: 72px;
+  height: 72px;
+  font-size: 1.8rem;
+}
+
+.avatar.payment {
+  background: #d6ead9;
+  font-size: 1.05rem;
+}
+
+.avatar-btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  font-weight: 700;
+}
+
+.row-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.row-title {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.row-sub {
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+.gets {
+  color: var(--gets);
+  font-weight: 600;
+}
+
+.owes {
+  color: var(--owes);
+  font-weight: 600;
+}
+
+.row-amount {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.icon-btn {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--ink-soft);
+}
+
+.icon-btn:hover {
+  background: var(--bg);
+  color: var(--owes);
+}
+
+.empty {
+  padding: 16px 0;
+  color: var(--ink-soft);
+}
+
+/* Group rows on the home page are links */
+.group-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.group-link::after {
+  content: "›";
+  font-size: 1.4rem;
+  color: var(--ink-soft);
+}
+
+#groupsList li + li .group-link {
+  border-top: 1px solid var(--line);
+}
+
+.reset-btn {
+  display: block;
+  margin: 8px auto 0;
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  color: var(--owes);
+  font-weight: 600;
+}
+
+/* ---------- The big "Add expense" button at the bottom ---------- */
+.fab {
+  position: fixed;
+  left: 50%;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  width: min(448px, calc(100% - 32px));
+  height: 56px;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--ink);
+  font-size: 1.05rem;
+  font-weight: 750;
+  box-shadow: 0 6px 18px rgba(18, 48, 47, 0.22);
+}
+
+.fab:active {
+  transform: translateX(-50%) scale(0.98);
+}
+
+/* ---------- Short messages that pop up and disappear ---------- */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 88px;
+  transform: translate(-50%, 8px);
+  max-width: calc(100% - 32px);
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--on-dark);
+  font-weight: 550;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+  overflow-wrap: anywhere;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* ---------- Panels that slide up ---------- */
+.sheet {
+  width: 100%;
+  max-width: min(480px, 100%);
+  max-height: 92dvh;
+  margin: auto auto 0;
+  padding: 0;
+  border: none;
+  border-radius: 24px 24px 0 0;
+  background: var(--surface);
+  color: var(--ink);
+  overflow: auto;
+}
+
+.sheet[open] {
+  animation: sheet-up 0.22s ease-out;
+}
+
+.sheet::backdrop {
+  background: rgba(18, 48, 47, 0.45);
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(32px);
+    opacity: 0;
+  }
+}
+
+.sheet form {
+  padding: 24px 20px max(20px, env(safe-area-inset-bottom));
+}
+
+.sheet h2 {
+  margin: 0 0 16px;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.sheet label,
+.sheet legend {
+  display: block;
+  margin: 14px 0 6px;
+  padding: 0;
+  font-weight: 600;
+}
+
+.sheet legend {
+  margin-top: 0;
+}
+
+.sheet input[type="text"],
+.sheet input[type="search"],
+.sheet input[type="number"] {
+  width: 100%;
+  height: 48px;
+  padding: 0 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  font-size: 1rem;
+}
+
+.sheet input:focus {
+  border-color: var(--ink);
+}
+
+.money-input {
+  position: relative;
+}
+
+.money-input span {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.sheet .money-input input {
+  padding-left: 30px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Hide the little up/down arrows in number boxes */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+fieldset {
+  border: none;
+  margin: 14px 0 0;
+  padding: 0;
+}
+
+/* Name buttons used for "Paid by", "Split between", "Who paid", "Paid to" */
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sheet .choice {
+  position: relative;
+  margin: 0;
+  font-weight: 500;
+}
+
+.choice input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.choice span {
+  display: inline-block;
+  padding: 9px 16px;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.choice input:checked + span {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--on-dark);
+  font-weight: 600;
+}
+
+.choice input[type="checkbox"]:checked + span::before {
+  content: "✓ ";
+}
+
+.choice input:focus-visible + span {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.split-note {
+  margin: 12px 0 0;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+.confirm-text {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.form-error {
+  min-height: 1.45em;
+  margin: 12px 0 0;
+  color: var(--owes);
+  font-weight: 600;
+}
+
+.form-error.on-dark {
+  color: #ffb4a8;
+}
+
+.form-error.on-dark:empty {
+  min-height: 0;
+  margin: 0;
+}
+
+.sheet-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.sheet-actions button {
+  flex: 1;
+  height: 50px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.ghost-btn {
+  border: 1.5px solid var(--line);
+  background: none;
+}
+
+.primary-btn {
+  border: none;
+  background: var(--ink);
+  color: var(--on-dark);
+}
+
+.danger-btn {
+  border: none;
+  background: var(--owes);
+  color: #fff;
+}
+
+/* People lists inside panels: search results, friends to add */
+.results {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+}
+
+.results .empty {
+  padding: 12px 0;
+}
+
+.pill-btn {
+  flex: none;
+  padding: 8px 14px;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--on-dark);
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.pill-btn:disabled {
+  background: none;
+  border-color: var(--line);
+  color: var(--ink-soft);
+  cursor: default;
+}
+
+/* Profile panel */
+.sheet .profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.profile h2 {
+  margin: 12px 0 0;
+}
+
+.profile-username {
+  margin: 2px 0 8px;
+  color: var(--ink-soft);
+}
+
+.profile .sheet-actions {
+  align-self: stretch;
+}
+
+/* On wider screens, panels sit in the middle instead of the bottom */
+@media (min-width: 600px) {
+  .sheet {
+    margin: auto;
+    border-radius: 24px;
+  }
+}
+
+/* Respect people who turn off animations on their device */
+@media (prefers-reduced-motion: reduce) {
+  .sheet[open] {
+    animation: none;
+  }
+
+  .toast {
+    transition: none;
+  }
+}
