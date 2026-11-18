@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.yaswanthbodapati.expensesplitter",
+        "sha256_cert_fingerprints": ["DA:79:83:65:09:66:F2:63:E3:BB:1A:4A:07:FD:99:C4:96:FC:A9:2F:18:5F:BD:5E:16:CA:A3:5F:97:B7:2F:D2"]
+      }
+    }]
