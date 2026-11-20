@@ -230,25 +230,25 @@ async function openHome() {
     return;
   }
   me = result.data.me;
-  renderHome(result.data.groups);
+  renderHome(result.data.groups, result.data.directTotal || 0);
   renderFriends();
   showView("home");
 }
 
-function renderHome(groups) {
+function renderHome(groups, directTotal) {
   const profileBtn = byId("profileBtn");
   profileBtn.textContent = me.name.charAt(0).toUpperCase();
   profileBtn.style.background = AVATAR_COLORS[me.id % AVATAR_COLORS.length];
 
-  // The dark panel: your total across every group
-  let total = 0;
+  // The dark panel: your total across every group and every friend
+  let total = directTotal;
   for (const g of groups) total = total + g.myBalance;
 
   byId("overallTitle").textContent = "Hi, " + me.name;
   const message = byId("overallMessage");
   message.innerHTML = "";
-  if (groups.length === 0) {
-    message.textContent = "Make a group and invite your friends.";
+  if (groups.length === 0 && friends.length === 0 && total === 0) {
+    message.textContent = "Add a friend or make a group to start splitting.";
   } else if (total > 0) {
     message.append("You're owed ", makeElement("span", "amount", money(total)), " in total.");
   } else if (total < 0) {
@@ -435,9 +435,17 @@ function balanceOf(userId) {
 }
 
 function renderGroup() {
-  byId("groupTitle").textContent = state.group.name;
+  const direct = state.group.isDirect;
+  byId("groupTitle").textContent = direct ? "You and " + state.group.name : state.group.name;
   document.title = state.group.name + " · Expense Splitter";
   byId("deleteGroupBtn").hidden = !state.group.isOwner;
+
+  // Just you and one friend: nobody else to invite
+  byId("shareBtn").hidden = direct;
+  byId("addPeopleBtn").hidden = direct;
+  for (const link of document.querySelectorAll(".back-link")) {
+    link.textContent = direct ? "Home" : "Your groups";
+  }
 
   renderSettleUp();
   renderPeople();
@@ -545,7 +553,10 @@ function expenseRow(e) {
   text.appendChild(makeElement("span", "row-title", e.description));
 
   const splitCount = e.shares.length;
-  const split = splitCount === state.members.length ? "split between everyone" : "split between " + splitCount;
+  let split = splitCount === state.members.length ? "split between everyone" : "split between " + splitCount;
+  if (state.group.isDirect) {
+    split = splitCount === 2 ? "split equally" : "for " + lower(nameFor(e.shares[0].userId));
+  }
   text.appendChild(makeElement("span", "row-sub", nameFor(e.paidBy) + " paid, " + split));
 
   // What this expense means for you
@@ -914,12 +925,34 @@ function renderFriends() {
   }
 
   for (const friend of friends) {
-    const li = personRow(friend);
+    const li = makeElement("li", "row");
+
+    // Tapping a friend opens the page for expenses with just them
+    const open = makeElement("button", "friend-link");
+    open.type = "button";
+    open.setAttribute("aria-label", "Expenses with " + friend.name);
+    open.appendChild(makeAvatar(friend.name, friend.id));
+    const text = makeElement("span", "row-text");
+    text.appendChild(makeElement("span", "row-title", friend.name));
+    if (friend.balance > 0) {
+      text.appendChild(makeElement("span", "row-sub gets", "Owes you " + money(friend.balance)));
+    } else if (friend.balance < 0) {
+      text.appendChild(makeElement("span", "row-sub owes", "You owe " + money(-friend.balance)));
+    } else {
+      text.appendChild(makeElement("span", "row-sub", "@" + friend.username));
+    }
+    open.appendChild(text);
+    open.addEventListener("click", function () {
+      openWithFriend(friend);
+    });
+    li.appendChild(open);
+
     li.appendChild(
       makeRemoveButton("Remove " + friend.name + " as a friend", async function () {
         const sure = await askToConfirm(
           "Remove " + friend.name + "?",
-          "You'll stop being friends. You both stay in any groups you share.",
+          "You'll stop being friends. You both stay in any groups you share, " +
+            "and expenses between you two are kept if you add each other again.",
           "Remove friend"
         );
         if (!sure) return;
@@ -933,6 +966,15 @@ function renderFriends() {
     );
     list.appendChild(li);
   }
+}
+
+async function openWithFriend(friend) {
+  const result = await api("POST", "/api/friends/" + friend.id + "/direct", {});
+  if (!result.ok) {
+    showToast(result.error);
+    return;
+  }
+  location.href = "/g/" + result.data.code;
 }
 
 function isInGroup(userId) {

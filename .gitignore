@@ -18,6 +18,7 @@ before-groups-version/
 groups-only-version/
 before-friends-version/
 before-hosting-version/
+before-direct-version/
 
 # Android package from PWABuilder. The signing key inside must stay private.
 android-package/

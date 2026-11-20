@@ -11,6 +11,7 @@ settle everyone up. It installs on Android and iPhone home screens like a regula
 - **Profiles:** sign up and log in with a username and password.
 - **Groups:** create a group and invite people with a private link, or add friends directly.
 - **Friends:** search for people by username and add them as friends.
+- **Just the two of you:** tap a friend to add expenses and payments with them alone, no group needed. The friends list shows who owes whom.
 - **Expenses:** record who paid and split the cost equally between everyone or chosen people.
   Uneven amounts are split to the cent ($100.00 between 3 is $33.34, $33.33 and $33.33).
 - **Settle up:** see who should pay whom, and record payments made in cash or by bank transfer.

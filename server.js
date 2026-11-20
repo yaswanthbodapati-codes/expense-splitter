@@ -91,6 +91,17 @@ const SCHEMA = `
     PRIMARY KEY (user_id, friend_id)
   );
 
+  -- Expenses between just two friends, without making a group.
+  -- Behind the scenes each pair gets its own hidden two-person group,
+  -- so expenses, payments and balances all work the same way as in groups.
+  -- user_low is always the smaller id, so a pair is stored only once.
+  CREATE TABLE IF NOT EXISTS direct_pairs (
+    user_low  INTEGER NOT NULL REFERENCES users(id),
+    user_high INTEGER NOT NULL REFERENCES users(id),
+    group_id  INTEGER NOT NULL UNIQUE REFERENCES groups(id),
+    PRIMARY KEY (user_low, user_high)
+  );
+
   CREATE INDEX IF NOT EXISTS memberships_by_user ON memberships (user_id);
   CREATE INDEX IF NOT EXISTS expenses_by_group ON expenses (group_id);
   CREATE INDEX IF NOT EXISTS payments_by_group ON payments (group_id);
@@ -341,10 +352,27 @@ async function getGroupState(group, me) {
   const balanceList = [];
   for (const [userId, cents] of balances) balanceList.push({ userId: userId, cents: cents });
 
+  const members = await groupMembers(group.id);
+
+  // Between two friends: the page is named after the other person, and
+  // nobody can invite others to it or delete it
+  const direct = await isDirect(group.id);
+  let name = group.name;
+  if (direct) {
+    for (const m of members) {
+      if (m.id !== me.id) name = m.name;
+    }
+  }
+
   return {
-    group: { code: group.code, name: group.name, isOwner: group.owner_id === me.id },
+    group: {
+      code: group.code,
+      name: name,
+      isOwner: !direct && group.owner_id === me.id,
+      isDirect: direct,
+    },
     me: me,
-    members: await groupMembers(group.id),
+    members: members,
     expenses: expenses,
     payments: payments,
     balances: balanceList,
@@ -358,6 +386,7 @@ async function myGroups(me) {
             (SELECT COUNT(*) FROM memberships m WHERE m.group_id = groups.id) AS member_count
      FROM memberships JOIN groups ON groups.id = memberships.group_id
      WHERE memberships.user_id = ?
+       AND groups.id NOT IN (SELECT group_id FROM direct_pairs)
      ORDER BY groups.created_at DESC`,
     [me.id]
   );
@@ -373,6 +402,74 @@ async function myGroups(me) {
     });
   }
   return list;
+}
+
+// =====================================================================
+// Expenses between two friends (no group needed)
+// =====================================================================
+async function isDirect(groupId) {
+  const row = await db.get("SELECT 1 AS yes FROM direct_pairs WHERE group_id = ?", [groupId]);
+  return row !== undefined;
+}
+
+// Both orders of the same two people give the same pair
+function pairOf(userId, otherId) {
+  return userId < otherId ? [userId, otherId] : [otherId, userId];
+}
+
+async function findDirectGroup(userId, otherId) {
+  return db.get(
+    `SELECT groups.id, groups.code, groups.name, groups.owner_id
+     FROM direct_pairs JOIN groups ON groups.id = direct_pairs.group_id
+     WHERE direct_pairs.user_low = ? AND direct_pairs.user_high = ?`,
+    pairOf(userId, otherId)
+  );
+}
+
+// Finds the hidden group for these two people, or makes it the first time
+async function directGroupFor(me, otherId) {
+  const existing = await findDirectGroup(me.id, otherId);
+  if (existing) return existing;
+
+  const code = crypto.randomBytes(8).toString("base64url");
+  const now = Date.now();
+  const pair = pairOf(me.id, otherId);
+  try {
+    await db.transaction(async function (tx) {
+      const result = await tx.run(
+        "INSERT INTO groups (code, name, owner_id, created_at) VALUES (?, ?, ?, ?)",
+        [code, "Just the two of you", me.id, now]
+      );
+      const add = "INSERT INTO memberships (group_id, user_id, joined_at) VALUES (?, ?, ?)";
+      await tx.run(add, [result.lastId, me.id, now]);
+      await tx.run(add, [result.lastId, otherId, now]);
+      await tx.run("INSERT INTO direct_pairs (user_low, user_high, group_id) VALUES (?, ?, ?)", [
+        pair[0],
+        pair[1],
+        result.lastId,
+      ]);
+    });
+  } catch (error) {
+    // Both friends opened it at the same moment: the other one made it first
+    if (!isUniqueError(error)) throw error;
+  }
+  return findDirectGroup(me.id, otherId);
+}
+
+// What you and each friend owe each other outside groups: Map of friend id -> cents
+// (positive means they owe you)
+async function directBalances(me) {
+  const rows = await db.all(
+    `SELECT group_id, CASE WHEN user_low = ? THEN user_high ELSE user_low END AS other_id
+     FROM direct_pairs WHERE user_low = ? OR user_high = ?`,
+    [me.id, me.id, me.id]
+  );
+  const result = new Map();
+  for (const row of rows) {
+    const balances = await groupBalances(row.group_id);
+    result.set(row.other_id, balances.get(me.id) || 0);
+  }
+  return result;
 }
 
 // =====================================================================
@@ -560,6 +657,9 @@ async function handleApi(req, res, url) {
   }
 
   // ---------- Finding people and friends ----------
+  //   /api/friends                 GET, POST
+  //   /api/friends/<id>            DELETE
+  //   /api/friends/<id>/direct     POST  (expenses with just that friend)
   // GET /api/users?q=pur  ->  people whose username starts with "pur"
   if (method === "GET" && pathname === "/api/users") {
     const text = cleanText(url.searchParams.get("q")).replace(/^@/, "");
@@ -567,8 +667,25 @@ async function handleApi(req, res, url) {
     return sendJson(res, 200, { users: await searchUsers(me, text) });
   }
 
+  // Your friends, each with what you owe each other outside groups
   if (method === "GET" && pathname === "/api/friends") {
-    return sendJson(res, 200, { friends: await friendsOf(me.id) });
+    const balances = await directBalances(me);
+    const friends = (await friendsOf(me.id)).map(function (f) {
+      return Object.assign({}, f, { balance: balances.get(f.id) || 0 });
+    });
+    return sendJson(res, 200, { friends: friends });
+  }
+
+  // POST /api/friends/<id>/direct  ->  the page for expenses with just this friend
+  const directMatch = pathname.match(/^\/api\/friends\/(\d+)\/direct$/);
+  if (method === "POST" && directMatch) {
+    const otherId = Number(directMatch[1]);
+    if (otherId === me.id) return sendError(res, 400, "Choose a friend, not yourself.");
+    if (!(await areFriends(me.id, otherId))) {
+      return sendError(res, 400, "Add them as a friend first.");
+    }
+    const group = await directGroupFor(me, otherId);
+    return sendJson(res, 200, { code: group.code });
   }
 
   // POST /api/friends  { userId }  ->  you both become friends
@@ -602,7 +719,10 @@ async function handleApi(req, res, url) {
 
   // ---------- Your groups ----------
   if (method === "GET" && pathname === "/api/groups") {
-    return sendJson(res, 200, { me: me, groups: await myGroups(me) });
+    // directTotal: everything friends owe you (or you owe them) outside groups
+    let directTotal = 0;
+    for (const cents of (await directBalances(me)).values()) directTotal = directTotal + cents;
+    return sendJson(res, 200, { me: me, groups: await myGroups(me), directTotal: directTotal });
   }
 
   if (method === "POST" && pathname === "/api/groups") {
@@ -644,6 +764,12 @@ async function handleApi(req, res, url) {
   const part = match[2];
   const id = match[3] ? Number(match[3]) : null;
   const member = await isMember(group.id, me.id);
+  const direct = await isDirect(group.id);
+
+  // A page between two friends is only for those two
+  if (direct && !member) {
+    return sendError(res, 404, "This page doesn't exist, or it isn't yours.");
+  }
 
   // Opening a group: members get everything; others with the link get a preview to join
   if (method === "GET" && !part) {
@@ -675,6 +801,10 @@ async function handleApi(req, res, url) {
 
   // Everything else is for members only
   if (!member) return sendError(res, 403, "Join this group first.");
+
+  if (direct && (part === "members" || (method === "DELETE" && !part))) {
+    return sendError(res, 400, "This is just between the two of you. Make a group to add more people.");
+  }
 
   if (method === "DELETE" && !part) {
     if (group.owner_id !== me.id) {
